@@ -1,10 +1,14 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from "vue";
-import taskService from "../../app/services/task.service";
+import taskService, {
+  TASKS_UPDATED_EVENT,
+} from "../../app/services/task.service";
 import projectService from "../../app/services/project.service";
 
 const upcomingTasks = ref({});
 let refreshIntervalId = null;
+const handleTasksUpdated = () => refreshTasks();
+const handleStorage = () => refreshTasks();
 
 const formatLocalDate = (date) => {
   const year = date.getFullYear();
@@ -64,12 +68,16 @@ const refreshTasks = () => {
 onMounted(() => {
   refreshTasks();
   refreshIntervalId = setInterval(refreshTasks, 30000);
+  window.addEventListener(TASKS_UPDATED_EVENT, handleTasksUpdated);
+  window.addEventListener("storage", handleStorage);
 });
 
 onUnmounted(() => {
   if (refreshIntervalId) {
     clearInterval(refreshIntervalId);
   }
+  window.removeEventListener(TASKS_UPDATED_EVENT, handleTasksUpdated);
+  window.removeEventListener("storage", handleStorage);
 });
 </script>
 

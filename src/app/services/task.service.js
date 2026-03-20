@@ -6,6 +6,13 @@ import storage from "./storage.service";
 import userService from "./userService";
 
 const KEY = "tasks";
+export const TASKS_UPDATED_EVENT = "tasks-updated";
+
+const notifyTasksUpdated = () => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(TASKS_UPDATED_EVENT));
+  }
+};
 
 const getTasks = () => {
   const tasks = storage.getForCurrentUser(KEY) || [];
@@ -59,6 +66,7 @@ const createTask = (task) => {
 
   tasks.push(newTask);
   storage.setForCurrentUser(KEY, tasks);
+  notifyTasksUpdated();
   return newTask;
 };
 
@@ -76,16 +84,19 @@ const updateTask = (updatedTask) => {
       : t,
   );
   storage.setForCurrentUser(KEY, tasks);
+  notifyTasksUpdated();
 };
 
 const deleteTask = (taskId) => {
   const tasks = getTasks().filter((t) => t.id !== taskId);
   storage.setForCurrentUser(KEY, tasks);
+  notifyTasksUpdated();
 };
 
 const deleteTasksByProjectId = (projectId) => {
   const tasks = getTasks().filter((t) => t.projectId !== projectId);
   storage.setForCurrentUser(KEY, tasks);
+  notifyTasksUpdated();
 };
 
 export default {
