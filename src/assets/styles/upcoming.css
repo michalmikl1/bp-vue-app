@@ -19,6 +19,7 @@
   transition:
     background-color 0.2s,
     border-left 0.2s;
+  overflow: hidden;
 }
 
 .day-block.has-tasks {
@@ -67,9 +68,49 @@
 
 .task-title {
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .no-tasks {
   color: #888;
   font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .upcoming-container {
+    padding: 16px;
+  }
+
+  .upcoming-container h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .day-block {
+    padding: 8px 12px;
+  }
+
+  .day-block h3 {
+    font-size: 16px;
+  }
+
+  .task-link {
+    gap: 4px;
+  }
+
+  .task-project {
+    flex-shrink: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+  }
+
+  .task-title {
+    flex: 1;
+    min-width: 0;
+  }
 }

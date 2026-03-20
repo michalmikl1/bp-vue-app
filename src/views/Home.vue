@@ -3,6 +3,10 @@ import { computed, onMounted, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import projectService from "../app/services/project.service";
 import Dashboard from "../components/dashboard/Dashboard.vue";
+import {
+  MAX_PROJECT_DESCRIPTION_LENGTH,
+  MAX_PROJECT_NAME_LENGTH,
+} from "../shared/constants/input.limits";
 
 const router = useRouter();
 
@@ -50,15 +54,30 @@ const handleAddProject = () => {
     return;
   }
 
+  if (trimmedName.length > MAX_PROJECT_NAME_LENGTH) {
+    error.value = `Název projektu může mít maximálně ${MAX_PROJECT_NAME_LENGTH} znaků.`;
+    return;
+  }
+
+  if (trimmedDescription.length > MAX_PROJECT_DESCRIPTION_LENGTH) {
+    error.value = `Popis projektu může mít maximálně ${MAX_PROJECT_DESCRIPTION_LENGTH} znaků.`;
+    return;
+  }
+
   if (projectNameExists(trimmedName)) {
     error.value = "Projekt s tímto názvem již existuje.";
     return;
   }
 
-  projectService.createProject({
-    name: trimmedName,
-    description: trimmedDescription,
-  });
+  try {
+    projectService.createProject({
+      name: trimmedName,
+      description: trimmedDescription,
+    });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "Projekt se nepodařilo vytvořit.";
+    return;
+  }
 
   refreshProjects();
   newProjectName.value = "";
@@ -85,18 +104,38 @@ const saveEdit = (id) => {
   const project = projectService.getProjectById(id);
   const trimmedName = editName.value.trim();
 
-  if (!trimmedName || projectNameExists(trimmedName, id)) {
-    editingId.value = null;
+  if (!project) {
     return;
   }
 
-  projectService.updateProject({
-    ...project,
-    name: trimmedName,
-  });
+  if (!trimmedName) {
+    error.value = "Název projektu nesmí být prázdný.";
+    return;
+  }
+
+  if (trimmedName.length > MAX_PROJECT_NAME_LENGTH) {
+    error.value = `Název projektu může mít maximálně ${MAX_PROJECT_NAME_LENGTH} znaků.`;
+    return;
+  }
+
+  if (projectNameExists(trimmedName, id)) {
+    error.value = "Projekt s tímto názvem již existuje.";
+    return;
+  }
+
+  try {
+    projectService.updateProject({
+      ...project,
+      name: trimmedName,
+    });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "Projekt se nepodařilo upravit.";
+    return;
+  }
 
   refreshProjects();
   editingId.value = null;
+  error.value = "";
 };
 
 const truncateDescription = (desc) =>
@@ -134,6 +173,7 @@ const handleCardClick = (projectId) => {
           v-model="newProjectName"
           type="text"
           placeholder="Název projektu"
+          :maxlength="MAX_PROJECT_NAME_LENGTH"
           @input="
             if (error) {
               error = '';
@@ -143,6 +183,7 @@ const handleCardClick = (projectId) => {
         <textarea
           v-model="newProjectDescription"
           placeholder="Popis projektu (nepovinné)"
+          :maxlength="MAX_PROJECT_DESCRIPTION_LENGTH"
         ></textarea>
         <button type="submit">Vytvořit</button>
       </form>
@@ -173,6 +214,7 @@ const handleCardClick = (projectId) => {
           v-if="editingId === project.id"
           v-model="editName"
           class="project-name-input"
+          :maxlength="MAX_PROJECT_NAME_LENGTH"
           @blur="saveEdit(project.id)"
           @keydown.enter="saveEdit(project.id)"
           autofocus

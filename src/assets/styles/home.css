@@ -135,6 +135,9 @@
   font-size: 1.4rem;
   text-align: center;
   margin-bottom: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .project-description {
@@ -142,7 +145,12 @@
   text-align: center;
   opacity: 0.95;
   min-height: 40px;
-  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .project-name-input {
@@ -228,6 +236,7 @@
   color: #555;
   font-size: 0.95rem;
   margin-bottom: 8px;
+  word-break: break-all;
 }
 
 .delete-modal input {

@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { MAX_USERNAME_LENGTH } from "../../shared/constants/input.limits";
 
 const USERS_KEY = "task_manager_users";
 const TOKEN_KEY = "task_manager_token";
@@ -12,9 +13,25 @@ const saveUsers = (users) => {
 };
 
 const register = ({ username, password }) => {
+  const trimmedUsername = (username || "").trim();
+
+  if (!trimmedUsername) {
+    throw new Error("Uživatelské jméno nesmí být prázdné.");
+  }
+
+  if (trimmedUsername.length > MAX_USERNAME_LENGTH) {
+    throw new Error(
+      `Uživatelské jméno může mít maximálně ${MAX_USERNAME_LENGTH} znaků.`,
+    );
+  }
+
   const users = getUsers();
 
-  if (users.find((u) => u.username.toLowerCase() === username.toLowerCase())) {
+  if (
+    users.find(
+      (u) => u.username.toLowerCase() === trimmedUsername.toLowerCase(),
+    )
+  ) {
     throw new Error("Uživatel s tímto jménem již existuje.");
   }
 
@@ -22,7 +39,7 @@ const register = ({ username, password }) => {
 
   const newUser = {
     id: Date.now(),
-    username,
+    username: trimmedUsername,
     password: hashedPassword,
   };
 

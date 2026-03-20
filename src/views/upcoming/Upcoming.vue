@@ -78,11 +78,17 @@ onMounted(() => {
             v-if="task.projectId"
             :to="`/projects/${task.projectId}`"
             class="task-link"
+            :title="`[${task.projectName}] ${task.title}`"
           >
             <span class="task-project">[{{ task.projectName }}]</span>
             <span class="task-title">{{ task.title }}</span>
           </RouterLink>
-          <a v-else href="#" class="task-link">
+          <a
+            v-else
+            href="#"
+            class="task-link"
+            :title="`[${task.projectName}] ${task.title}`"
+          >
             <span class="task-project">[{{ task.projectName }}]</span>
             <span class="task-title">{{ task.title }}</span>
           </a>

@@ -7,6 +7,11 @@ import {
   TaskPriority,
   TaskStatus,
 } from "../../shared/constants/task.constants";
+import {
+  MAX_PROJECT_DESCRIPTION_LENGTH,
+  MAX_TASK_DESCRIPTION_LENGTH,
+  MAX_TASK_TITLE_LENGTH,
+} from "../../shared/constants/input.limits";
 
 const props = defineProps({
   id: {
@@ -36,6 +41,7 @@ const editingTaskId = ref(null);
 const editingTask = reactive({});
 const editingDesc = ref(false);
 const descValue = ref("");
+const error = ref("");
 
 const statusFilter = ref("");
 const priorityFilter = ref("");
@@ -65,12 +71,35 @@ const resetEditingTask = () => {
 };
 
 const handleCreateTask = () => {
-  if (!newTask.title.trim()) return;
+  const title = newTask.title.trim();
+  const description = newTask.description.trim();
 
-  taskService.createTask({ ...newTask, projectId: projectId.value });
+  if (!title) {
+    error.value = "Název úkolu nesmí být prázdný.";
+    return;
+  }
+
+  if (title.length > MAX_TASK_TITLE_LENGTH) {
+    error.value = `Název úkolu může mít maximálně ${MAX_TASK_TITLE_LENGTH} znaků.`;
+    return;
+  }
+
+  if (description.length > MAX_TASK_DESCRIPTION_LENGTH) {
+    error.value = `Popis úkolu může mít maximálně ${MAX_TASK_DESCRIPTION_LENGTH} znaků.`;
+    return;
+  }
+
+  try {
+    taskService.createTask({ ...newTask, projectId: projectId.value });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "Úkol se nepodařilo vytvořit.";
+    return;
+  }
+
   refreshTasks();
   formVisible.value = false;
   resetNewTask();
+  error.value = "";
 };
 
 const handleDelete = (taskId) => {
@@ -94,11 +123,35 @@ const startEditingTask = (task) => {
 };
 
 const saveTaskEdit = () => {
-  if (!editingTask.title.trim()) return;
-  taskService.updateTask({ ...editingTask });
+  const title = (editingTask.title || "").trim();
+  const description = (editingTask.description || "").trim();
+
+  if (!title) {
+    error.value = "Název úkolu nesmí být prázdný.";
+    return;
+  }
+
+  if (title.length > MAX_TASK_TITLE_LENGTH) {
+    error.value = `Název úkolu může mít maximálně ${MAX_TASK_TITLE_LENGTH} znaků.`;
+    return;
+  }
+
+  if (description.length > MAX_TASK_DESCRIPTION_LENGTH) {
+    error.value = `Popis úkolu může mít maximálně ${MAX_TASK_DESCRIPTION_LENGTH} znaků.`;
+    return;
+  }
+
+  try {
+    taskService.updateTask({ ...editingTask, title, description });
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : "Úkol se nepodařilo upravit.";
+    return;
+  }
+
   refreshTasks();
   editingTaskId.value = null;
   resetEditingTask();
+  error.value = "";
 };
 
 const statusCz = {
@@ -137,9 +190,24 @@ const filteredTasks = computed(() =>
 );
 
 const saveProjectDesc = () => {
-  projectService.updateProject({ ...project.value, description: descValue.value });
-  project.value = { ...project.value, description: descValue.value };
+  const description = descValue.value.trim();
+
+  if (description.length > MAX_PROJECT_DESCRIPTION_LENGTH) {
+    error.value = `Popis projektu může mít maximálně ${MAX_PROJECT_DESCRIPTION_LENGTH} znaků.`;
+    return;
+  }
+
+  try {
+    projectService.updateProject({ ...project.value, description });
+  } catch (err) {
+    error.value =
+      err instanceof Error ? err.message : "Popis projektu se nepodařilo uložit.";
+    return;
+  }
+
+  project.value = { ...project.value, description };
   editingDesc.value = false;
+  error.value = "";
 };
 
 const cancelProjectDesc = () => {
@@ -169,6 +237,7 @@ const isTaskDueSoon = (task) =>
         <textarea
           v-model="descValue"
           class="project-desc-input"
+          :maxlength="MAX_PROJECT_DESCRIPTION_LENGTH"
         ></textarea>
         <div class="project-desc-buttons">
           <button class="task-save-btn" @click="saveProjectDesc">Uložit</button>
@@ -190,6 +259,8 @@ const isTaskDueSoon = (task) =>
         Datum vytvoření: {{ new Date(project.createdAt).toLocaleDateString() }}
       </span>
     </div>
+
+    <p v-if="error" class="project-create-error">{{ error }}</p>
 
     <div class="stats-grid">
       <div class="stat-box">
@@ -227,11 +298,13 @@ const isTaskDueSoon = (task) =>
           v-model="newTask.title"
           type="text"
           placeholder="Název úkolu"
+          :maxlength="MAX_TASK_TITLE_LENGTH"
           required
         />
         <textarea
           v-model="newTask.description"
           placeholder="Popis"
+          :maxlength="MAX_TASK_DESCRIPTION_LENGTH"
         ></textarea>
         <select v-model="newTask.status">
           <option v-for="status in Object.values(TaskStatus)" :key="status" :value="status">
@@ -285,10 +358,12 @@ const isTaskDueSoon = (task) =>
               <input
                 v-model="editingTask.title"
                 class="task-card-title-input"
+                :maxlength="MAX_TASK_TITLE_LENGTH"
               />
               <textarea
                 v-model="editingTask.description"
                 class="task-card-desc-input"
+                :maxlength="MAX_TASK_DESCRIPTION_LENGTH"
               ></textarea>
               <select v-model="editingTask.status">
                 <option

@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import useAuth from "../../composables/useAuth";
+import { MAX_USERNAME_LENGTH } from "../../shared/constants/input.limits";
 
 const router = useRouter();
 const { register } = useAuth();
@@ -28,6 +29,7 @@ const handleRegister = () => {
         v-model="username"
         type="text"
         placeholder="Uživatelské jméno"
+        :maxlength="MAX_USERNAME_LENGTH"
         required
       />
       <input
