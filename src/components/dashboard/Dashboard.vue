@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import taskService from "../../app/services/task.service";
+import { TaskStatus } from "../../shared/constants/task.constants";
 
 const props = defineProps({
   projects: {
@@ -13,11 +14,13 @@ const tasks = taskService.getTasks();
 
 const totalProjects = computed(() => props.projects.length);
 const totalTasks = computed(() => tasks.length);
+const completedTasks = computed(() => tasks.filter((t) => t.completed).length);
+const activeTasks = computed(() => totalTasks.value - completedTasks.value);
 
 const tasksByStatus = computed(() => ({
-  TODO: tasks.filter((t) => t.status === "TODO").length,
-  IN_PROGRESS: tasks.filter((t) => t.status === "IN_PROGRESS").length,
-  DONE: tasks.filter((t) => t.status === "DONE").length,
+  TODO: tasks.filter((t) => t.status === TaskStatus.TODO).length,
+  IN_PROGRESS: tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length,
+  REVIEW: tasks.filter((t) => t.status === TaskStatus.REVIEW).length,
 }));
 
 const tasksByPriority = computed(() => ({
@@ -46,23 +49,28 @@ const tasksDueSoon = computed(
         <p>{{ totalProjects }}</p>
       </div>
       <div class="db-stat-box">
-        <h3>Úkoly celkem</h3>
+        <h3>&Uacute;koly celkem</h3>
         <p>{{ totalTasks }}</p>
       </div>
       <div class="db-stat-box">
-        <h3>Úkoly podle stavu</h3>
+        <h3>&Uacute;koly podle stavu</h3>
         <p>Zpracovat: {{ tasksByStatus.TODO }}</p>
-        <p>Probíhá: {{ tasksByStatus.IN_PROGRESS }}</p>
-        <p>Hotovo: {{ tasksByStatus.DONE }}</p>
+        <p>Prob&iacute;h&aacute;: {{ tasksByStatus.IN_PROGRESS }}</p>
+        <p>Ke kontrole: {{ tasksByStatus.REVIEW }}</p>
       </div>
       <div class="db-stat-box">
-        <h3>Úkoly podle priority</h3>
-        <p>Nízká: {{ tasksByPriority.LOW }}</p>
-        <p>Střední: {{ tasksByPriority.MEDIUM }}</p>
-        <p>Vysoká: {{ tasksByPriority.HIGH }}</p>
+        <h3>Stav &uacute;kolů</h3>
+        <p>Aktivn&iacute;: {{ activeTasks }}</p>
+        <p>Splněn&eacute;: {{ completedTasks }}</p>
       </div>
       <div class="db-stat-box">
-        <h3>Úkoly s termínem do 1 dne</h3>
+        <h3>&Uacute;koly podle priority</h3>
+        <p>N&iacute;zk&aacute;: {{ tasksByPriority.LOW }}</p>
+        <p>Středn&iacute;: {{ tasksByPriority.MEDIUM }}</p>
+        <p>Vysok&aacute;: {{ tasksByPriority.HIGH }}</p>
+      </div>
+      <div class="db-stat-box">
+        <h3>&Uacute;koly s term&iacute;nem do 1 dne</h3>
         <p>{{ tasksDueSoon }}</p>
       </div>
     </div>

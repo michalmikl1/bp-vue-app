@@ -28,6 +28,7 @@ const createDefaultTask = () => ({
   status: TaskStatus.TODO,
   priority: TaskPriority.MEDIUM,
   dueDate: "",
+  completed: false,
 });
 
 const projectId = computed(() => Number(props.id));
@@ -154,10 +155,18 @@ const saveTaskEdit = () => {
   error.value = "";
 };
 
+const toggleTaskCompleted = (task, completed) => {
+  taskService.updateTask({
+    ...task,
+    completed,
+  });
+  refreshTasks();
+};
+
 const statusCz = {
   [TaskStatus.TODO]: "Zpracovat",
   [TaskStatus.IN_PROGRESS]: "Probíhá",
-  [TaskStatus.DONE]: "Hotovo",
+  [TaskStatus.REVIEW]: "Ke kontrole",
 };
 
 const priorityCz = {
@@ -170,7 +179,8 @@ const stats = computed(() => ({
   total: tasks.value.length,
   todo: tasks.value.filter((t) => t.status === TaskStatus.TODO).length,
   inProgress: tasks.value.filter((t) => t.status === TaskStatus.IN_PROGRESS).length,
-  done: tasks.value.filter((t) => t.status === TaskStatus.DONE).length,
+  review: tasks.value.filter((t) => t.status === TaskStatus.REVIEW).length,
+  completed: tasks.value.filter((t) => t.completed).length,
   high: tasks.value.filter((t) => t.priority === TaskPriority.HIGH).length,
 }));
 
@@ -269,15 +279,19 @@ const isTaskDueSoon = (task) =>
       </div>
       <div class="stat-box">
         <h3>{{ stats.todo }}</h3>
-        <p>TODO</p>
+        <p>Zpracovat</p>
       </div>
       <div class="stat-box">
         <h3>{{ stats.inProgress }}</h3>
         <p>Probíhá</p>
       </div>
       <div class="stat-box">
-        <h3>{{ stats.done }}</h3>
-        <p>Hotovo</p>
+        <h3>{{ stats.review }}</h3>
+        <p>Ke kontrole</p>
+      </div>
+      <div class="stat-box">
+        <h3>{{ stats.completed }}</h3>
+        <p>Splneno</p>
       </div>
       <div class="stat-box">
         <h3>{{ stats.high }}</h3>
@@ -355,6 +369,10 @@ const isTaskDueSoon = (task) =>
         >
           <div class="task-inner-card">
             <template v-if="editingTaskId === task.id">
+              <label class="task-completed-checkbox">
+                <input v-model="editingTask.completed" type="checkbox" />
+                Splneno
+              </label>
               <input
                 v-model="editingTask.title"
                 class="task-card-title-input"
@@ -386,7 +404,17 @@ const isTaskDueSoon = (task) =>
               <input v-model="editingTask.dueDate" type="date" />
             </template>
             <template v-else>
-              <h3 class="task-card-title">{{ task.title }}</h3>
+              <div class="task-header-row">
+                <input
+                  type="checkbox"
+                  class="task-checkbox"
+                  :checked="task.completed || false"
+                  @change="toggleTaskCompleted(task, $event.target.checked)"
+                />
+                <h3 :class="['task-card-title', { 'task-completed': task.completed }]">
+                  {{ task.title }}
+                </h3>
+              </div>
               <p class="task-card-desc">{{ task.description }}</p>
               <p class="task-card-status">Status: {{ statusCz[task.status] }}</p>
               <p class="task-card-priority">

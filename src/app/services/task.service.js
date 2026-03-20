@@ -7,7 +7,13 @@ import userService from "./userService";
 
 const KEY = "tasks";
 
-const getTasks = () => storage.getForCurrentUser(KEY) || [];
+const getTasks = () => {
+  const tasks = storage.getForCurrentUser(KEY) || [];
+  return tasks.map((t) => ({
+    ...t,
+    completed: t.completed || false,
+  }));
+};
 
 const getTasksByProjectId = (projectId) =>
   getTasks().filter((t) => t.projectId === projectId);
@@ -48,6 +54,7 @@ const createTask = (task) => {
     id: Date.now(),
     createdAt: new Date().toISOString(),
     ownerId: currentUser?.id ?? null,
+    completed: false,
   };
 
   tasks.push(newTask);

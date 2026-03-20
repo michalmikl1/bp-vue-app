@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 import taskService from "../../app/services/task.service";
 import projectService from "../../app/services/project.service";
 
 const upcomingTasks = ref({});
+let refreshIntervalId = null;
 
 const formatLocalDate = (date) => {
   const year = date.getFullYear();
@@ -22,7 +23,7 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("cs-CZ", options);
 };
 
-onMounted(() => {
+const refreshTasks = () => {
   const projects = projectService.getProjects();
   const tasks = taskService.getTasks();
 
@@ -58,6 +59,17 @@ onMounted(() => {
   }
 
   upcomingTasks.value = upcoming;
+};
+
+onMounted(() => {
+  refreshTasks();
+  refreshIntervalId = setInterval(refreshTasks, 30000);
+});
+
+onUnmounted(() => {
+  if (refreshIntervalId) {
+    clearInterval(refreshIntervalId);
+  }
 });
 </script>
 
@@ -77,7 +89,7 @@ onMounted(() => {
           <RouterLink
             v-if="task.projectId"
             :to="`/projects/${task.projectId}`"
-            class="task-link"
+            :class="['task-link', { 'task-completed': task.completed }]"
             :title="`[${task.projectName}] ${task.title}`"
           >
             <span class="task-project">[{{ task.projectName }}]</span>
@@ -86,7 +98,7 @@ onMounted(() => {
           <a
             v-else
             href="#"
-            class="task-link"
+            :class="['task-link', { 'task-completed': task.completed }]"
             :title="`[${task.projectName}] ${task.title}`"
           >
             <span class="task-project">[{{ task.projectName }}]</span>
